@@ -2056,6 +2056,7 @@ on_error:
 ssize_t libvshadow_store_descriptor_read_buffer(
          libvshadow_store_descriptor_t *store_descriptor,
          libbfio_handle_t *file_io_handle,
+         libbfio_handle_t *store_file_io_handle,
          uint8_t *buffer,
          size_t buffer_size,
          off64_t offset,
@@ -2087,6 +2088,7 @@ ssize_t libvshadow_store_descriptor_read_buffer(
 	int in_previous_bitmap                                  = 0;
 	int in_reverse_block_descriptor_list                    = 0;
 	int result                                              = 0;
+	libbfio_handle_t *tmp_file_io_handle                    = NULL;
 
 	if( store_descriptor == NULL )
 	{
@@ -2121,11 +2123,19 @@ ssize_t libvshadow_store_descriptor_read_buffer(
 
 		return( -1 );
 	}
+	if( store_file_io_handle != NULL )
+	{
+		tmp_file_io_handle = store_file_io_handle;
+	}
+	else
+	{
+		tmp_file_io_handle = file_io_handle;
+	}
 	/* This function will acquire the write lock
 	 */
 	if( libvshadow_store_descriptor_read_block_descriptors(
 	     store_descriptor,
-	     file_io_handle,
+	     tmp_file_io_handle,
 	     error ) != 1 )
 	{
 		libcerror_error_set(
@@ -2513,6 +2523,7 @@ ssize_t libvshadow_store_descriptor_read_buffer(
 				read_count = libvshadow_store_descriptor_read_buffer(
 					      store_descriptor->next_store_descriptor,
 					      file_io_handle,
+					      store_file_io_handle,
 					      &( buffer[ buffer_offset ] ),
 					      read_size,
 					      block_descriptor_offset,
@@ -2597,6 +2608,7 @@ ssize_t libvshadow_store_descriptor_read_buffer(
 				read_count = libvshadow_store_descriptor_read_buffer(
 					      store_descriptor->next_store_descriptor,
 					      file_io_handle,
+					      store_file_io_handle,
 					      &( buffer[ buffer_offset ] ),
 					      read_size,
 					      block_offset,
@@ -3452,4 +3464,3 @@ int libvshadow_store_descriptor_get_block_descriptor_by_index(
 #endif
 	return( result );
 }
-

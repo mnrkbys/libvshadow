@@ -214,6 +214,7 @@ int libvshadow_store_descriptor_read_block_descriptors(
 ssize_t libvshadow_store_descriptor_read_buffer(
          libvshadow_store_descriptor_t *store_descriptor,
          libbfio_handle_t *file_io_handle,
+         libbfio_handle_t *store_file_io_handle,
          uint8_t *buffer,
          size_t buffer_size,
          off64_t offset,
@@ -271,4 +272,3 @@ int libvshadow_store_descriptor_get_block_descriptor_by_index(
 #endif
 
 #endif /* !defined( _LIBVSHADOW_STORE_DESCRIPTOR_H ) */
-

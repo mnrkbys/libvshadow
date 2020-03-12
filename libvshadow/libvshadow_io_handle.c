@@ -778,6 +778,9 @@ int libvshadow_io_handle_read_catalog(
 	uint64_t catalog_entry_type                          = 0;
 	int result                                           = 0;
 	int store_descriptor_index                           = 0;
+	int aux_file_flag                                    = (file_offset)? 0 : 1;
+	off64_t first_offset                                 = 0;
+	int first_offset_flag                                = 0;
 
 	if( io_handle == NULL )
 	{
@@ -875,6 +878,11 @@ int libvshadow_io_handle_read_catalog(
 			 function );
 
 			goto on_error;
+		}
+		if( aux_file_flag && first_offset_flag == 0 )
+		{
+			first_offset = next_offset - io_handle->block_size;
+			first_offset_flag = 1;
 		}
 		catalog_block_offset = sizeof( vshadow_catalog_header_t );
 
@@ -1003,7 +1011,18 @@ int libvshadow_io_handle_read_catalog(
 			}
 			catalog_block_offset += (size_t) 128;
 		}
-		file_offset = next_offset;
+		if( aux_file_flag )
+		{
+			file_offset = next_offset - first_offset;
+			if( file_offset <= 0 )
+			{
+				file_offset = 0;
+			}
+		}
+		else
+		{
+			file_offset = next_offset;
+		}
 	}
 	while( file_offset != 0 );
 
@@ -1241,4 +1260,3 @@ int libvshadow_io_handle_read_catalog_header_data(
 	}
 	return( 1 );
 }
-

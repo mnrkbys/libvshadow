@@ -52,6 +52,10 @@ LIBVSHADOW_EXTERN \
 int libvshadow_volume_open_file_io_handle(
      libvshadow_volume_t *volume,
      libbfio_handle_t *file_io_handle,
+     libvshadow_volume_t *catalog_volume,
+     libbfio_handle_t *catalog_file_io_handle,
+     libvshadow_volume_t *store_volume,
+     libbfio_handle_t *store_file_io_handle,
      int access_flags,
      libvshadow_error_t **error );
 
@@ -114,6 +118,10 @@ int vshadow_test_volume_open_source(
 	result = libvshadow_volume_open_file_io_handle(
 	          *volume,
 	          file_io_handle,
+	          NULL,
+	          NULL,
+	          NULL,
+	          NULL,
 	          LIBVSHADOW_OPEN_READ,
 	          error );
 
@@ -855,6 +863,10 @@ int vshadow_test_volume_open_file_io_handle(
 	result = libvshadow_volume_open_file_io_handle(
 	          volume,
 	          file_io_handle,
+	          NULL,
+	          NULL,
+	          NULL,
+	          NULL,
 	          LIBVSHADOW_OPEN_READ,
 	          &error );
 
@@ -872,6 +884,10 @@ int vshadow_test_volume_open_file_io_handle(
 	result = libvshadow_volume_open_file_io_handle(
 	          NULL,
 	          file_io_handle,
+	          NULL,
+	          NULL,
+	          NULL,
+	          NULL,
 	          LIBVSHADOW_OPEN_READ,
 	          &error );
 
@@ -889,6 +905,10 @@ int vshadow_test_volume_open_file_io_handle(
 
 	result = libvshadow_volume_open_file_io_handle(
 	          volume,
+	          NULL,
+	          NULL,
+	          NULL,
+	          NULL,
 	          NULL,
 	          LIBVSHADOW_OPEN_READ,
 	          &error );
@@ -908,6 +928,10 @@ int vshadow_test_volume_open_file_io_handle(
 	result = libvshadow_volume_open_file_io_handle(
 	          volume,
 	          file_io_handle,
+	          NULL,
+	          NULL,
+	          NULL,
+	          NULL,
 	          -1,
 	          &error );
 
@@ -928,6 +952,10 @@ int vshadow_test_volume_open_file_io_handle(
 	result = libvshadow_volume_open_file_io_handle(
 	          volume,
 	          file_io_handle,
+	          NULL,
+	          NULL,
+	          NULL,
+	          NULL,
 	          LIBVSHADOW_OPEN_READ,
 	          &error );
 
@@ -1812,4 +1840,3 @@ on_error:
 	}
 	return( EXIT_FAILURE );
 }
-

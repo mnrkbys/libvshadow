@@ -55,6 +55,22 @@ struct mount_handle
 	/* The notification output stream
 	 */
 	FILE *notify_stream;
+
+     /* catalog attributes
+     */
+     mount_file_system_t *catalog_file_system;
+     off64_t catalog_offset;
+     libbfio_handle_t *catalog_file_io_handle;
+
+     /* store attributes
+     */
+     mount_file_system_t *store_file_system;
+     off64_t store_offset;
+     libbfio_handle_t *store_file_io_handle;
+
+	/* Flag for parsing the libvshadow volume
+	 */
+	int no_parsing_volume;
 };
 
 int mount_handle_system_string_copy_from_64_bit_in_decimal(
@@ -89,6 +105,8 @@ int mount_handle_set_path_prefix(
 int mount_handle_open(
      mount_handle_t *mount_handle,
      const system_character_t *filename,
+     const system_character_t *catalog_filename,
+     const system_character_t *store_filename,
      libcerror_error_t **error );
 
 int mount_handle_close(
@@ -106,4 +124,3 @@ int mount_handle_get_file_entry_by_path(
 #endif
 
 #endif /* !defined( _MOUNT_HANDLE_H ) */
-

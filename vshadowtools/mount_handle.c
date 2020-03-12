@@ -40,6 +40,10 @@ extern \
 int libvshadow_volume_open_file_io_handle(
      libvshadow_volume_t *volume,
      libbfio_handle_t *file_io_handle,
+     libvshadow_volume_t *catalog_volume,
+     libbfio_handle_t *catalog_file_io_handle,
+     libvshadow_volume_t *store_volume,
+     libbfio_handle_t *store_file_io_handle,
      int access_flags,
      libvshadow_error_t **error );
 
@@ -233,6 +237,32 @@ int mount_handle_initialize(
 
 		goto on_error;
 	}
+	if( mount_file_system_initialize(
+	     &( ( *mount_handle )->catalog_file_system ),
+	     error ) != 1 )
+	{
+		libcerror_error_set(
+		 error,
+		 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+		 LIBCERROR_RUNTIME_ERROR_INITIALIZE_FAILED,
+		 "%s: unable to initialize catalog file system.",
+		 function );
+
+		goto on_error;
+	}
+	if( mount_file_system_initialize(
+	     &( ( *mount_handle )->store_file_system ),
+	     error ) != 1 )
+	{
+		libcerror_error_set(
+		 error,
+		 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+		 LIBCERROR_RUNTIME_ERROR_INITIALIZE_FAILED,
+		 "%s: unable to initialize store file system.",
+		 function );
+
+		goto on_error;
+	}
 	return( 1 );
 
 on_error:
@@ -418,13 +448,21 @@ int mount_handle_set_path_prefix(
 int mount_handle_open(
      mount_handle_t *mount_handle,
      const system_character_t *filename,
+     const system_character_t *catalog_filename,
+     const system_character_t *store_filename,
      libcerror_error_t **error )
 {
 	libbfio_handle_t *file_io_handle    = NULL;
+	libbfio_handle_t *catalog_file_io_handle = NULL;
+	libbfio_handle_t *store_file_io_handle = NULL;
 	libvshadow_store_t *vshadow_store   = NULL;
 	libvshadow_volume_t *vshadow_volume = NULL;
+	libvshadow_volume_t *vshadow_volume_catalog = NULL;
+	libvshadow_volume_t *vshadow_volume_store = NULL;
 	static char *function               = "mount_handle_open";
 	size_t filename_length              = 0;
+	size_t catalog_filename_length      = 0;
+	size_t store_filename_length        = 0;
 	int number_of_stores                = 0;
 	int result                          = 0;
 	int store_index                     = 0;
@@ -451,6 +489,7 @@ int mount_handle_open(
 
 		return( -1 );
 	}
+/* ******************************************************************* */
 	filename_length = system_string_length(
 	                   filename );
 
@@ -490,6 +529,90 @@ int mount_handle_open(
 
 		goto on_error;
 	}
+/* ------------------------------------------------------------------- */
+	if ( mount_handle->no_parsing_volume )
+	{
+		catalog_filename_length = system_string_length(
+						catalog_filename );
+
+		if( libbfio_file_range_initialize(
+			&catalog_file_io_handle,
+			error ) != 1 )
+		{
+			libcerror_error_set(
+			error,
+			LIBCERROR_ERROR_DOMAIN_RUNTIME,
+			LIBCERROR_RUNTIME_ERROR_INITIALIZE_FAILED,
+			"%s: unable to initialize catalog file IO handle.",
+			function );
+
+			goto on_error;
+		}
+#if defined( HAVE_WIDE_SYSTEM_CHARACTER )
+		if( libbfio_file_range_set_name_wide(
+			catalog_file_io_handle,
+			catalog_filename,
+			catalog_filename_length,
+			error ) != 1 )
+#else
+		if( libbfio_file_range_set_name(
+			catalog_file_io_handle,
+			catalog_filename,
+			catalog_filename_length,
+			error ) != 1 )
+#endif
+		{
+			libcerror_error_set(
+			error,
+			LIBCERROR_ERROR_DOMAIN_IO,
+			LIBCERROR_IO_ERROR_OPEN_FAILED,
+			"%s: unable to set catalog file range name.",
+			function );
+
+			goto on_error;
+		}
+
+		store_filename_length = system_string_length(
+						store_filename );
+
+		if( libbfio_file_range_initialize(
+			&store_file_io_handle,
+			error ) != 1 )
+		{
+			libcerror_error_set(
+			error,
+			LIBCERROR_ERROR_DOMAIN_RUNTIME,
+			LIBCERROR_RUNTIME_ERROR_INITIALIZE_FAILED,
+			"%s: unable to initialize store file IO handle.",
+			function );
+
+			goto on_error;
+		}
+#if defined( HAVE_WIDE_SYSTEM_CHARACTER )
+		if( libbfio_file_range_set_name_wide(
+			store_file_io_handle,
+			store_filename,
+			store_filename_length,
+			error ) != 1 )
+#else
+		if( libbfio_file_range_set_name(
+			store_file_io_handle,
+			store_filename,
+			store_filename_length,
+			error ) != 1 )
+#endif
+		{
+			libcerror_error_set(
+			error,
+			LIBCERROR_ERROR_DOMAIN_IO,
+			LIBCERROR_IO_ERROR_OPEN_FAILED,
+			"%s: unable to set store file range name.",
+			function );
+
+			goto on_error;
+		}
+	}
+/* ******************************************************************* */
 	if( libbfio_file_range_set(
 	     file_io_handle,
 	     mount_handle->volume_offset,
@@ -505,6 +628,43 @@ int mount_handle_open(
 
 		goto on_error;
 	}
+
+/* ------------------------------------------------------------------- */
+	if ( mount_handle->no_parsing_volume )
+	{
+		if( libbfio_file_range_set(
+			catalog_file_io_handle,
+			mount_handle->catalog_offset,
+			0,
+			error ) != 1 )
+		{
+			libcerror_error_set(
+			error,
+			LIBCERROR_ERROR_DOMAIN_IO,
+			LIBCERROR_IO_ERROR_OPEN_FAILED,
+			"%s: unable to set catalog file range offset.",
+			function );
+
+			goto on_error;
+		}
+
+		if( libbfio_file_range_set(
+			store_file_io_handle,
+			mount_handle->store_offset,
+			0,
+			error ) != 1 )
+		{
+			libcerror_error_set(
+			error,
+			LIBCERROR_ERROR_DOMAIN_IO,
+			LIBCERROR_IO_ERROR_OPEN_FAILED,
+			"%s: unable to set store file range offset.",
+			function );
+
+			goto on_error;
+		}
+	}
+/* ******************************************************************* */
 	if( libvshadow_volume_initialize(
 	     &vshadow_volume,
 	     error ) != 1 )
@@ -518,6 +678,37 @@ int mount_handle_open(
 
 		goto on_error;
 	}
+/* ------------------------------------------------------------------- */
+	if ( mount_handle->no_parsing_volume )
+	{
+		if( libvshadow_volume_initialize(
+			 &vshadow_volume_catalog,
+			 error ) != 1 )
+		{
+			libcerror_error_set(
+			 error,
+			 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+			 LIBCERROR_RUNTIME_ERROR_INITIALIZE_FAILED,
+			 "%s: unable to initialize catalog.",
+			 function );
+
+			goto on_error;
+		}
+		if( libvshadow_volume_initialize(
+			 &vshadow_volume_store,
+			 error ) != 1 )
+		{
+			libcerror_error_set(
+			 error,
+			 LIBCERROR_ERROR_DOMAIN_RUNTIME,
+			 LIBCERROR_RUNTIME_ERROR_INITIALIZE_FAILED,
+			 "%s: unable to initialize store.",
+			 function );
+
+			goto on_error;
+		}
+	}
+/* ******************************************************************* */
 	result = libvshadow_check_volume_signature_file_io_handle(
 	          file_io_handle,
 	          error );
@@ -538,6 +729,10 @@ int mount_handle_open(
 		result = libvshadow_volume_open_file_io_handle(
 		          vshadow_volume,
 		          file_io_handle,
+		          vshadow_volume_catalog,
+		          catalog_file_io_handle,
+		          vshadow_volume_store,
+		          store_file_io_handle,
 		          LIBVSHADOW_OPEN_READ,
 		          error );
 
@@ -618,6 +813,8 @@ int mount_handle_open(
 			vshadow_store = NULL;
 		}
 		mount_handle->file_io_handle = file_io_handle;
+		mount_handle->catalog_file_io_handle = catalog_file_io_handle;
+		mount_handle->store_file_io_handle = store_file_io_handle;
 	}
 	return( 1 );
 
@@ -941,4 +1138,3 @@ int mount_handle_get_file_entry_by_path(
 on_error:
 	return( -1 );
 }
-
